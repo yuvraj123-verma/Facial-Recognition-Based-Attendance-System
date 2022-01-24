@@ -1,0 +1,528 @@
+IMPORT tkinter as tk
+
+from tkinter IMPORT messagebox
+
+IMPORT cv2
+
+IMPORT os
+
+IMPORT csv
+
+IMPORT numpy as np
+
+from PIL IMPORT Image
+
+IMPORT pandas as pd
+
+IMPORT datetime
+
+IMPORT time
+
+
+
+
+
+SET window TO tk.Tk()
+
+window.title("Face_Recogniser")
+
+
+
+window.geometry('1580x720')
+
+window.configure(background='dark blue')
+
+
+
+window.grid_rowconfigure(0, weight=1)
+
+window.grid_columnconfigure(0, weight=1)
+
+
+
+
+
+SET message TO tk.Label(window, text="Smart Attendance System based on Facial Recognition", bg="royal blue",
+
+                   fg="mint cream", width=50, height=3, font=('times', 30, 'italic bold underline'))
+
+
+
+message.place(x=200, y=20)
+
+
+
+SET lbl TO tk.Label(window, text="Enter ID", width=20, height=2,
+
+               fg="mint cream", bg="royal blue", font=('times', 15, ' bold '))
+
+lbl.place(x=400, y=200)
+
+
+
+SET txt TO tk.Entry(window, width=20, bg="royal blue",
+
+               fg="mint cream", font=('times', 15, ' bold '))
+
+txt.place(x=700, y=215)
+
+
+
+SET lbl2 TO tk.Label(window, text="Enter Name", width=20, fg="mint cream",
+
+                bg="royal blue", height=2, font=('times', 15, ' bold '))
+
+lbl2.place(x=400, y=300)
+
+
+
+SET txt2 TO tk.Entry(window, width=20, bg="royal blue",
+
+                fg="mint cream", font=('times', 15, ' bold '))
+
+txt2.place(x=700, y=315)
+
+
+
+SET lbl3 TO tk.Label(window, text="Notification : ", width=20, fg="mint cream",
+
+                bg="royal blue", height=2, font=('times', 15, ' bold underline '))
+
+lbl3.place(x=400, y=400)
+
+
+
+SET message TO tk.Label(window, text="", bg="royal blue", fg="mint cream", width=50,
+
+                   height=2, activebackground="royal blue", font=('times', 15, ' bold '))
+
+message.place(x=700, y=400)
+
+
+
+SET lbl3 TO tk.Label(window, text="Attendance : ", width=20, fg="mint cream",
+
+                bg="royal blue", height=2, font=('times', 15, ' bold  underline'))
+
+lbl3.place(x=400, y=650)
+
+
+
+
+
+SET message2 TO tk.Label(window, text="", fg="mint cream", bg="royal blue",
+
+                    activeforeground="green", width=60, height=2, font=('times', 15, ' bold '))
+
+message2.place(x=700, y=650)
+
+
+
+
+
+DEFINE FUNCTION clear():
+
+    txt.delete(0, 'end')
+
+    SET res TO ""
+
+    message.configure(text=res)
+
+
+
+
+
+DEFINE FUNCTION clear2():
+
+    txt2.delete(0, 'end')
+
+    SET res TO ""
+
+    message.configure(text=res)
+
+
+
+
+
+DEFINE FUNCTION is_number(s):
+
+    TRY:
+
+        float(s)
+
+        RETURN True
+
+    except ValueError:
+
+        PASS
+
+
+
+    TRY:
+
+        IMPORT unicodedata
+
+        unicodedata.numeric(s)
+
+        RETURN True
+
+    except (TypeError, ValueError):
+
+        PASS
+
+
+
+    RETURN False
+
+
+
+
+
+DEFINE FUNCTION TakeImages():
+
+    SET Id TO (txt.get())
+
+    SET name TO (txt2.get())
+
+    if(is_number(Id) and name.isalpha()):
+
+        SET cam TO cv2.VideoCapture(0)
+
+        SET harcascadePath TO "haarcascade_frontalface_default.xml"
+
+        SET detector TO cv2.CascadeClassifier(harcascadePath)
+
+        SET sampleNum TO 0
+
+        while(True):
+
+            SET ret, img TO cam.read()
+
+            SET gray TO cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+            SET faces TO detector.detectMultiScale(gray, 1.3, 5)
+
+            FOR (x, y, w, h) IN faces:
+
+                cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
+
+                # incrementing sample number
+
+                SET sampleNum TO sampleNum+1
+
+                # saving the captured face IN the dataset folder TrainingImage
+
+                cv2.imwrite(r"TrainingImage/ "+name + "."+Id + '.' +
+
+                            str(sampleNum) + ".jpg", gray[y:y+h, x:x+w])
+
+                # display the frame
+
+                cv2.imshow('frame', img)
+
+            # wait FOR 50 miliseconds
+
+            IF cv2.waitKey(50) & 0xFF EQUALS ord('q'):
+
+                break
+
+            # break IF the sample number is morethan 30
+
+            ELSEIF sampleNum > 30:
+
+                break
+
+        cam.release()
+
+        cv2.destroyAllWindows()
+
+        SET res TO "Images Saved FOR ID : " + Id + " Name : " + name
+
+        SET row TO [Id, name]
+
+        # with open(r'StudentDetails/StudentDetails.csv', 'r') as csvFile:
+
+        #     IF not csvFile.read().strip():
+
+        #         with open(r'StudentDetails/StudentDetails.csv', 'a+') as csvFile:
+
+        SET #             writer TO csv.writer(csvFile)
+
+        #             writer.writerow(['Id', 'Name'])
+
+        with open(r'StudentDetails/StudentDetails.csv', 'a+') as csvFile:
+
+            with open(r'StudentDetails/StudentDetails.csv', 'r') as csvFile1:
+
+                IF not csvFile1.read().strip():
+
+                    # with open(r'StudentDetails/StudentDetails.csv', 'a+') as csvFile:
+
+                    SET writer TO csv.writer(csvFile)
+
+                    writer.writerow(['Id', 'Name'])
+
+            SET writer TO csv.writer(csvFile)
+
+            writer.writerow(row)
+
+        csvFile.close()
+
+        message.configure(text=res)
+
+    ELSE:
+
+        if(is_number(Id)):
+
+            SET res TO "Enter Alphabetical Name"
+
+            message.configure(text=res)
+
+        if(name.isalpha()):
+
+            SET res TO "Enter Numeric Id"
+
+            message.configure(text=res)
+
+
+
+
+
+DEFINE FUNCTION TrainImages():
+
+    SET # recognizer TO cv2.face.LBPHFaceRecognizer_create()#$cv2.createLBPHFaceRecognizer()
+
+    SET recognizer TO cv2.face_LBPHFaceRecognizer.create()
+
+    SET harcascadePath TO "haarcascade_frontalface_default.xml"
+
+    SET detector TO cv2.CascadeClassifier(harcascadePath)
+
+    SET faces, Id TO getImagesAndLabels("TrainingImage")
+
+    recognizer.train(faces, np.array(Id))
+
+    recognizer.save(r"TrainingImageLabel/Trainner.yml")
+
+    SET res TO "Image Trained"  # +",".join(str(f) FOR f IN Id)
+
+    message.configure(text=res)
+
+
+
+
+
+DEFINE FUNCTION getImagesAndLabels(path):
+
+    # get the path of all the files IN the folder
+
+    SET imagePaths TO [os.path.join(path, f) FOR f IN os.listdir(path)]
+
+    # OUTPUT(imagePaths)
+
+
+
+    # create empth face list
+
+    SET faces TO []
+
+    # create empty ID list
+
+    SET Ids TO []
+
+    # now looping through all the image paths and loading the Ids and the images
+
+    FOR imagePath IN imagePaths:
+
+        # loading the image and converting it to gray scale
+
+        SET pilImage TO Image.open(imagePath).convert('L')
+
+        # Now we are converting the PIL image into numpy array
+
+        SET imageNp TO np.array(pilImage, 'uint8')
+
+        # getting the Id from the image
+
+        SET Id TO int(os.path.split(imagePath)[-1].split(".")[1])
+
+        # extract the face from the training image sample
+
+        faces.append(imageNp)
+
+        Ids.append(Id)
+
+    RETURN faces, Ids
+
+
+
+
+
+DEFINE FUNCTION TrackImages():
+
+    SET recognizer TO cv2.face.LBPHFaceRecognizer_create()  # cv2.createLBPHFaceRecognizer()
+
+    recognizer.read(r"TrainingImageLabel/Trainner.yml")
+
+    SET harcascadePath TO "haarcascade_frontalface_default.xml"
+
+    SET faceCascade TO cv2.CascadeClassifier(harcascadePath)
+
+    SET df TO pd.read_csv(r"StudentDetails/StudentDetails.csv")
+
+    SET cam TO cv2.VideoCapture(0)
+
+    SET font TO cv2.FONT_HERSHEY_SIMPLEX
+
+    SET col_names TO ['Id', 'Name', 'Date', 'Time']
+
+    SET attendance TO pd.DataFrame(columns=col_names)
+
+    WHILE True:
+
+        SET ret, im TO cam.read()
+
+        SET gray TO cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+
+        SET faces TO faceCascade.detectMultiScale(gray, 1.2, 5)
+
+        for(x, y, w, h) IN faces:
+
+            cv2.rectangle(im, (x, y), (x+w, y+h), (225, 0, 0), 2)
+
+            SET Id, conf TO recognizer.predict(gray[y:y+h, x:x+w])
+
+            if(conf < 50):
+
+                SET ts TO time.time()
+
+                SET date TO datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
+
+                SET timeStamp TO datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+
+                SET aa TO df.loc[df['Id'] EQUALS Id]['Name'].values
+
+                SET tt TO str(Id)+"-"+aa
+
+                SET attendance.loc[len(attendance)] TO [Id, aa, date, timeStamp]
+
+
+
+            ELSE:
+
+                SET Id TO 'Unknown'
+
+                SET tt TO str(Id)
+
+            if(conf > 75):
+
+                SET noOfFile TO len(os.listdir("ImagesUnknown"))+1
+
+                cv2.imwrite(r"ImagesUnknown/Image" +
+
+                            str(noOfFile) + ".jpg", im[y:y+h, x:x+w])
+
+            cv2.putText(im, str(tt), (x, y+h), font, 1, (255, 255, 255), 2)
+
+        SET attendance TO attendance.drop_duplicates(subset=['Id'], keep='first')
+
+        cv2.imshow('im', im)
+
+        IF (cv2.waitKey(1) EQUALS ord('q')):
+
+            break
+
+    SET ts TO time.time()
+
+    SET date TO datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d')
+
+    SET timeStamp TO datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+
+    SET Hour, Minute, Second TO timeStamp.split(":")
+
+    SET fileName TO r"Attendance/Attendance_"+date+"_"+Hour+"-"+Minute+"-"+Second+".csv"
+
+    attendance.to_csv(fileName, index=False)
+
+    cam.release()
+
+    cv2.destroyAllWindows()
+
+    OUTPUT(attendance)
+
+    SET res TO ''
+
+    FOR i IN attendance:
+
+        #OUTPUT(i)
+
+        res += (''.join(str(attendance[i])))
+
+        #OUTPUT(res)
+
+        #OUTPUT(''.join(res))
+
+    message2.configure(text=res)
+
+
+
+
+
+DEFINE FUNCTION quit():
+
+    SET dialog_title TO 'QUIT'
+
+    SET dialog_text TO 'Are you sure?'
+
+    SET answer TO messagebox.askquestion(dialog_title, dialog_text)
+
+    IF answer EQUALS 'yes':
+
+        window.destroy()
+
+
+
+
+
+SET clearButton TO tk.Button(window, text="Clear", command=clear, fg="mint cream", bg="royal blue",
+
+                        width=20, height=2, activebackground="mint cream", font=('times', 15, ' bold '))
+
+clearButton.place(x=1050, y=200)
+
+SET clearButton2 TO tk.Button(window, text="Clear", command=clear2, fg="mint cream", bg="royal blue",
+
+                         width=20, height=2, activebackground="mint cream", font=('times', 15, ' bold '))
+
+clearButton2.place(x=1050, y=300)
+
+SET takeImg TO tk.Button(window, text="Take Images", command=TakeImages, fg="mint cream", bg="royal blue",
+
+                    width=20, height=3, activebackground="mint cream", font=('times', 15, ' bold '))
+
+takeImg.place(x=200, y=500)
+
+SET trainImg TO tk.Button(window, text="Train Images", command=TrainImages, fg="mint cream",
+
+                     bg="royal blue", width=20, height=3, activebackground="mint cream", font=('times', 15, ' bold '))
+
+trainImg.place(x=500, y=500)
+
+SET trackImg TO tk.Button(window, text="Track Images", command=TrackImages, fg="mint cream",
+
+                     bg="royal blue", width=20, height=3, activebackground="mint cream", font=('times', 15, ' bold '))
+
+trackImg.place(x=800, y=500)
+
+SET quitWindow TO tk.Button(window, text="Quit", command=quit, fg="mint cream", bg="royal blue",
+
+                       width=20, height=3, activebackground="mint cream", font=('times', 15, ' bold '))
+
+quitWindow.place(x=1100, y=500)
+
+
+
+
+
+window.mainloop()
+
